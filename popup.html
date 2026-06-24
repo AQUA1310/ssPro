@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SnapShot Pro</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      width: 500px;
+      margin: 10px;
+      text-align: center;
+    }
+    #controls {
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 8px 12px;
+      margin: 2px;
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    button:hover { background-color: #0056b3; }
+    canvas {
+      border: 2px solid #333;
+      margin-top: 10px;
+      max-width: 100%;
+      cursor: crosshair;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>SnapShot Pro</h2>
+  
+  <div id="controls">
+    <button id="capture-btn">📸 Capture Tab</button>
+    <button id="clear-btn">❌ Clear Canvas</button>
+  </div>
+
+  <canvas id="screenshot-canvas" width="480" height="300"></canvas>
+
+  <script src="popup.js"></script>
+</body>
+</html>
