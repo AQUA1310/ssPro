@@ -4,7 +4,7 @@ const ScreenshotContext = createContext();
 
 export function ScreenshotProvider({ children }) {
   const [currentImage, setCurrentImage] = useState(null);
-  const [activeTool, setActiveTool] = useState('pen');
+  const [activeTool, setActiveTool] = useState('rect');
   const [history, setHistory] = useState([]);
 
   // Load baseline history logs out of Chrome Storage on mount

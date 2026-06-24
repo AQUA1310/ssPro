@@ -5,10 +5,7 @@ export default function Toolbar({ onCapture, onClear }) {
   const { activeTool, setActiveTool } = useScreenshot();
 
   const tools = [
-    { id: 'pen', label: '✏️ Pen' },
-    { id: 'highlight', label: '🖍️ Highlight' },
     { id: 'rect', label: '⏹️ Crop Box' },
-    { id: 'arrow', label: '➡️ Arrow' },
     { id: 'blur', label: '🌫️ Blur' },
   ];
 

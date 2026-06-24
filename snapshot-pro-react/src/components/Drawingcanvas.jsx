@@ -81,37 +81,19 @@ export default function DrawingCanvas({ captureTrigger, clearTrigger }) {
     const currentY = e.clientY - bounds.top;
 
     // Wipe trailing strokes for vectorized shapes
-    if (['rect', 'arrow', 'blur'].includes(activeTool) && canvasSnapshot) {
+    if (['rect', 'blur'].includes(activeTool) && canvasSnapshot) {
       ctx.putImageData(canvasSnapshot, 0, 0);
     }
 
-    if (activeTool === 'pen') {
-      ctx.lineTo(currentX, currentY);
-      ctx.strokeStyle = "#fa5252";
-      ctx.lineWidth = 3;
-      ctx.lineCap = "round";
-      ctx.stroke();
-    } 
-    else if (activeTool === 'highlight') {
-      ctx.lineTo(currentX, currentY);
-      ctx.strokeStyle = "rgba(255, 224, 0, 0.4)";
-      ctx.lineWidth = 14;
-      ctx.stroke();
-    } 
-    else if (activeTool === 'rect') {
+    if (activeTool === 'rect') {
       ctx.strokeStyle = "#228be6";
       ctx.lineWidth = 3;
       ctx.strokeRect(startPos.x, startPos.y, currentX - startPos.x, currentY - startPos.y);
     } 
-    else if (activeTool === 'arrow') {
-      ctx.strokeStyle = "#12b886";
-      ctx.lineWidth = 3;
-      ctx.fillStyle = "#12b886";
-      drawVectorArrow(ctx, startPos.x, startPos.y, currentX, currentY);
-    }
     else if (activeTool === 'blur') {
-      ctx.strokeStyle = "rgba(0, 0, 0, 0.4)";
-      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = "#ae3ec9"; // Clean purple tint for blur target boxes
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 4]); // Clean dashed guide rail
       ctx.strokeRect(startPos.x, startPos.y, currentX - startPos.x, currentY - startPos.y);
       ctx.setLineDash([]);
     }
