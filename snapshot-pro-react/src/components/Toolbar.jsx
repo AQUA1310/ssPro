@@ -6,51 +6,87 @@ export default function Toolbar({ onCapture, onClear }) {
 
   const tools = [
     { id: 'rect', label: '⏹️ Crop Box' },
-    { id: 'blur', label: '🌫️ Blur' },
+    { id: 'blur', label: '🌫️ Privacy Blur' },
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', backgroundColor: '#fff', padding: '15px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', marginBottom: '15px' }}>
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      gap: '12px', 
+      backgroundColor: '#1e2030', // 🌟 Premium dark glass card background
+      padding: '16px', 
+      borderRadius: '12px', 
+      border: '1px solid rgba(255,255,255,0.06)',
+      boxShadow: '0 8px 24px rgba(0,0,0,0.2)'
+    }}>
       
-      {/* Action Buttons */}
+      {/* Core Action Buttons */}
       <div style={{ display: 'flex', gap: '10px' }}>
         <button 
-          onClick={onCapture} // 🌟 CRITICAL: Wired to parent handleCapture
-          style={{ flex: 1, padding: '10px', backgroundColor: '#228be6', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
+          onClick={onCapture}
+          style={{ 
+            flex: 2, 
+            padding: '11px', 
+            backgroundColor: '#4f46e5', // Royal vibrant accent blue
+            color: 'white', 
+            border: 'none', 
+            borderRadius: '8px', 
+            fontWeight: '600', 
+            fontSize: '13px',
+            cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)',
+            transition: 'transform 0.1s active'
+          }}
         >
-          📸 Capture Tab
+          📸 Capture Active Tab
         </button>
         <button 
-          onClick={onClear} // 🌟 CRITICAL: Wired to parent handleClear
-          style={{ padding: '10px', backgroundColor: '#e0e0e0', color: '#333', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+          onClick={onClear}
+          style={{ 
+            flex: 1, 
+            padding: '11px', 
+            backgroundColor: '#2e3047', 
+            color: '#cbd5e1', 
+            border: '1px solid rgba(255,255,255,0.08)', 
+            borderRadius: '8px', 
+            fontSize: '13px',
+            fontWeight: '500',
+            cursor: 'pointer'
+          }}
         >
           🗑️ Clear
         </button>
       </div>
 
-      <hr style={{ border: 'none', borderTop: '1px solid #eee', margin: '5px 0' }} />
+      <div style={{ height: '1px', backgroundColor: 'rgba(255,255,255,0.06)', margin: '2px 0' }} />
 
-      {/* Editing Canvas Tools */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '5px' }}>
-        {tools.map((tool) => (
-          <button
-            key={tool.id}
-            onClick={() => setActiveTool(tool.id)}
-            style={{
-              padding: '8px 12px',
-              fontSize: '13px',
-              backgroundColor: activeTool === tool.id ? '#e3fafc' : '#f1f3f5',
-              color: activeTool === tool.id ? '#0c8599' : '#495057',
-              border: activeTool === tool.id ? '1px solid #1098ad' : '1px solid #dee2e6',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontWeight: activeTool === tool.id ? 'bold' : 'normal',
-              transition: 'all 0.2s'
-            }}
-          >
-            {tool.label}
-          </button>
-        ))}
+      {/* Editing Tool Toggles */}
+      <div style={{ display: 'flex', gap: '10px' }}>
+        {tools.map((tool) => {
+          const isSelected = activeTool === tool.id;
+          return (
+            <button
+              key={tool.id}
+              onClick={() => setActiveTool(tool.id)}
+              style={{
+                flex: 1,
+                padding: '11px',
+                fontSize: '13px',
+                fontWeight: isSelected ? '600' : '500',
+                backgroundColor: isSelected ? 'rgba(99, 102, 241, 0.15)' : '#161824',
+                color: isSelected ? '#a5b4fc' : '#94a3b8',
+                border: isSelected ? '1px solid #6366f1' : '1px solid rgba(255,255,255,0.05)',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                boxShadow: isSelected ? '0 0 12px rgba(99, 102, 241, 0.1)' : 'none'
+              }}
+            >
+              {tool.label}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

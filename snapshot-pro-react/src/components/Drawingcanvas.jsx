@@ -2,42 +2,37 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useScreenshot } from '../context/ScreenshotContext';
 
 export default function DrawingCanvas({ captureTrigger, clearTrigger }) {
-  const { activeTool, saveToHistory } = useScreenshot();
+  const { activeTool } = useScreenshot();
   const canvasRef = useRef(null);
   
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [canvasSnapshot, setCanvasSnapshot] = useState(null);
-  const [rectCoordinates, setRectCoordinates] = useState(null);
 
   // --- Listen for Parent Capture Events ---
   useEffect(() => {
     if (!captureTrigger) return;
     
     const canvas = canvasRef.current;
-    if (!canvas) return; // Guard clause to ensure canvas is fully mounted
+    if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
     const img = new Image();
     
     img.onload = () => {
-      // Force reset any global transform matrix styles
       ctx.setTransform(1, 0, 0, 1, 0, 0); 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       // Paint the snapshot layer perfectly onto the pixel canvas
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       
-      // Cache the initial clean state so shape drawing tools work smoothly right away
+      // Cache the initial clean state
       const snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
       setCanvasSnapshot(snapshot);
     };
     
-    // Cross-origin attribute fixes potential canvas taint bugs
     img.crossOrigin = "anonymous"; 
     img.src = captureTrigger;
-    
-    setRectCoordinates(null); // Reset crop box tracking
   }, [captureTrigger]);
 
   // --- Listen for Parent Clear Actions ---
@@ -46,11 +41,13 @@ export default function DrawingCanvas({ captureTrigger, clearTrigger }) {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    setRectCoordinates(null);
+    setCanvasSnapshot(null);
   }, [clearTrigger]);
 
   // --- 1. Mouse Down Handler ---
   const handleMouseDown = (e) => {
+    if (!canvasSnapshot) return;
+
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     const bounds = canvas.getBoundingClientRect();
@@ -60,14 +57,8 @@ export default function DrawingCanvas({ captureTrigger, clearTrigger }) {
     setIsDrawing(true);
     setStartPos({ x, y });
 
-    // Cache current canvas pixel layer
-    const snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    setCanvasSnapshot(snapshot);
-
-    if (activeTool === 'pen' || activeTool === 'highlight') {
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-    }
+    // 🌟 ONE BOX RULE: Wipe out previous boxes by restoring the clean snapshot immediately
+    ctx.putImageData(canvasSnapshot, 0, 0);
   };
 
   // --- 2. Mouse Move Handler ---
@@ -80,8 +71,8 @@ export default function DrawingCanvas({ captureTrigger, clearTrigger }) {
     const currentX = e.clientX - bounds.left;
     const currentY = e.clientY - bounds.top;
 
-    // Wipe trailing strokes for vectorized shapes
-    if (['rect', 'blur'].includes(activeTool) && canvasSnapshot) {
+    // Wipe trailing preview frames while dragging
+    if (canvasSnapshot) {
       ctx.putImageData(canvasSnapshot, 0, 0);
     }
 
@@ -91,15 +82,15 @@ export default function DrawingCanvas({ captureTrigger, clearTrigger }) {
       ctx.strokeRect(startPos.x, startPos.y, currentX - startPos.x, currentY - startPos.y);
     } 
     else if (activeTool === 'blur') {
-      ctx.strokeStyle = "#ae3ec9"; // Clean purple tint for blur target boxes
+      ctx.strokeStyle = "#ae3ec9";
       ctx.lineWidth = 2;
-      ctx.setLineDash([6, 4]); // Clean dashed guide rail
+      ctx.setLineDash([6, 4]);
       ctx.strokeRect(startPos.x, startPos.y, currentX - startPos.x, currentY - startPos.y);
       ctx.setLineDash([]);
     }
   };
 
-  // --- 3. Mouse Up Handler (Apply Crop Storage or Blurs) ---
+// --- 3. Mouse Up Handler (Instant Crop & Auto-Download without outlines) ---
   const handleMouseUp = (e) => {
     if (!isDrawing) return;
     setIsDrawing(false);
@@ -115,62 +106,59 @@ export default function DrawingCanvas({ captureTrigger, clearTrigger }) {
     const width = Math.abs(endX - startPos.x);
     const height = Math.abs(endY - startPos.y);
 
-    if (activeTool === 'rect') {
-      setRectCoordinates({ x, y, width, height });
+    // Filter out accidental mini-clicks
+    if (width <= 5 || height <= 5) {
+      // If they just clicked without dragging, clear any leftover preview lines
+      if (canvasSnapshot) ctx.putImageData(canvasSnapshot, 0, 0);
+      return;
     }
 
-    if (activeTool === 'blur' && width > 5 && height > 5) {
+    if (activeTool === 'rect') {
+      // 🌟 FIX: Instantly restore the canvas to its clean snapshot state 
+      // This wipes the blue guide line away so it's not captured in the final image!
+      ctx.putImageData(canvasSnapshot, 0, 0);
+
+      // Create our off-screen cropping canvas
+      const cropCanvas = document.createElement('canvas');
+      cropCanvas.width = width;
+      cropCanvas.height = height;
+      const cropCtx = cropCanvas.getContext('2d');
+
+      // Grab the perfectly clean pixels
+      cropCtx.drawImage(
+        canvas,
+        x, y, width, height, 
+        0, 0, width, height  
+      );
+
+      // Trigger automatic background link download
+      const imageURI = cropCanvas.toDataURL("image/png");
+      const virtualLink = document.createElement('a');
+      virtualLink.download = `crop-${Date.now()}.png`;
+      virtualLink.href = imageURI;
+      virtualLink.click();
+    }
+
+    if (activeTool === 'blur') {
+      // 🌟 FIX: Instantly restore canvas to wipe the purple dashed line before blurring
+      ctx.putImageData(canvasSnapshot, 0, 0);
+
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = width;
       tempCanvas.height = height;
       const tempCtx = tempCanvas.getContext('2d');
+      
+      // Grab clean pixels into memory, blur them, and paint them back down smoothly
       tempCtx.drawImage(canvas, x, y, width, height, 0, 0, width, height);
 
       ctx.filter = 'blur(6px)';
       ctx.drawImage(tempCanvas, x, y);
       ctx.filter = 'none';
+
+      // Save this beautifully blurred state into our memory baseline snapshot
+      const updatedSnapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      setCanvasSnapshot(updatedSnapshot);
     }
-  };
-
-  // --- 4. Export Download Handler ---
-  const handleDownload = () => {
-    const canvas = canvasRef.current;
-    let targetCanvas = canvas;
-
-    if (rectCoordinates && rectCoordinates.width > 5 && rectCoordinates.height > 5) {
-      const cropCanvas = document.createElement('canvas');
-      cropCanvas.width = rectCoordinates.width;
-      cropCanvas.height = rectCoordinates.height;
-      const cropCtx = cropCanvas.getContext('2d');
-      cropCtx.drawImage(
-        canvas,
-        rectCoordinates.x, rectCoordinates.y, rectCoordinates.width, rectCoordinates.height,
-        0, 0, rectCoordinates.width, rectCoordinates.height
-      );
-      targetCanvas = cropCanvas;
-    }
-
-    const imageURI = targetCanvas.toDataURL("image/png");
-    const virtualLink = document.createElement('a');
-    virtualLink.download = `snapshot-react-${Date.now()}.png`;
-    virtualLink.href = imageURI;
-    virtualLink.click();
-  };
-
-  // Mathematical vector helper
-  const drawVectorArrow = (context, fromX, fromY, toX, toY) => {
-    const headLength = 14;
-    const angle = Math.atan2(toY - fromY, toX - fromX);
-    context.beginPath();
-    context.moveTo(fromX, fromY);
-    context.lineTo(toX, toY);
-    context.stroke();
-    context.beginPath();
-    context.moveTo(toX, toY);
-    context.lineTo(toX - headLength * Math.cos(angle - Math.PI / 6), toY - headLength * Math.sin(angle - Math.PI / 6));
-    context.lineTo(toX - headLength * Math.cos(angle + Math.PI / 6), toY - headLength * Math.sin(angle + Math.PI / 6));
-    context.closePath();
-    context.fill();
   };
 
   return (
@@ -191,23 +179,6 @@ export default function DrawingCanvas({ captureTrigger, clearTrigger }) {
           cursor: 'crosshair'
         }}
       />
-      <button
-        onClick={handleDownload}
-        style={{
-          marginTop: '15px',
-          padding: '10px 0',
-          backgroundColor: '#f59f00',
-          color: 'white',
-          border: 'none',
-          borderRadius: '6px',
-          width: '100%',
-          maxWidth: '500px',
-          fontWeight: 'bold',
-          cursor: 'pointer'
-        }}
-      >
-        💾 Download Screenshot (PNG)
-      </button>
     </div>
   );
 }
