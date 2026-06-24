@@ -154,3 +154,23 @@ function drawArrow(fromX, fromY, toX, toY) {
   ctx.closePath();
   ctx.fill();
 }
+// --- 5. Export / Download Mechanics ---
+const downloadBtn = document.getElementById('download-btn');
+
+downloadBtn.addEventListener('click', () => {
+  // Convert the canvas drawing surface into a downloadable PNG data URL
+  const imageURI = canvas.toDataURL("image/png");
+
+  // Create a temporary "virtual" anchor element in memory
+  const virtualLink = document.createElement('a');
+  
+  // Create a timestamped filename so files don't overwrite each other
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+  virtualLink.download = `snapshot-${timestamp}.png`;
+  
+  // Assign the canvas image data as the link target
+  virtualLink.href = imageURI;
+
+  // Trigger a fake click on the link to force Chrome to download the file
+  virtualLink.click();
+});
