@@ -15,6 +15,7 @@ let currentTool = 'pen';
 let isDrawing = false;
 let startX, startY;
 let canvasSnapshot;
+let rectCoordinates = null; // NEW: Holds the final cropped coordinates
 
 // --- Tool Switching Logic ---
 Object.keys(tools).forEach(toolName => {
@@ -104,6 +105,19 @@ canvas.addEventListener('mouseup', (e) => {
   if (!isDrawing) return;
   isDrawing = false;
 
+// --- Capture Crop Coordinates for Rectangle Tool ---
+  if (currentTool === 'rect') {
+    const endX = e.offsetX;
+    const endY = e.offsetY;
+
+    rectCoordinates = {
+      x: Math.min(startX, endX),
+      y: Math.min(startY, endY),
+      width: Math.abs(endX - startX),
+      height: Math.abs(endY - startY)
+    };
+  }
+
   if (currentTool === 'blur') {
     const endX = e.offsetX;
     const endY = e.offsetY;
@@ -133,6 +147,7 @@ canvas.addEventListener('mouseleave', () => isDrawing = false);
 
 clearBtn.addEventListener('click', () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  rectCoordinates = null;
 });
 
 // Arrowhead calculations using trigonometry vectors
@@ -154,23 +169,36 @@ function drawArrow(fromX, fromY, toX, toY) {
   ctx.closePath();
   ctx.fill();
 }
+
 // --- 5. Export / Download Mechanics ---
 const downloadBtn = document.getElementById('download-btn');
 
 downloadBtn.addEventListener('click', () => {
-  // Convert the canvas drawing surface into a downloadable PNG data URL
-  const imageURI = canvas.toDataURL("image/png");
+  let downloadCanvas = canvas; // Default to whole canvas
 
-  // Create a temporary "virtual" anchor element in memory
+  // If a rectangle box was drawn, create a cropped canvas subset
+  if (rectCoordinates && rectCoordinates.width > 5 && rectCoordinates.height > 5) {
+    const cropCanvas = document.createElement('canvas');
+    cropCanvas.width = rectCoordinates.width;
+    cropCanvas.height = rectCoordinates.height;
+    const cropCtx = cropCanvas.getContext('2d');
+
+    // Slice out the exact rectangle portion from the main canvas
+    cropCtx.drawImage(
+      canvas,
+      rectCoordinates.x, rectCoordinates.y, rectCoordinates.width, rectCoordinates.height, // Source positions
+      0, 0, rectCoordinates.width, rectCoordinates.height // Destination positions
+    );
+
+    downloadCanvas = cropCanvas; // Change download target to our crop slice
+  }
+
+  // Convert target canvas to file data
+  const imageURI = downloadCanvas.toDataURL("image/png");
   const virtualLink = document.createElement('a');
-  
-  // Create a timestamped filename so files don't overwrite each other
   const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-  virtualLink.download = `snapshot-${timestamp}.png`;
   
-  // Assign the canvas image data as the link target
+  virtualLink.download = `snapshot-${timestamp}.png`;
   virtualLink.href = imageURI;
-
-  // Trigger a fake click on the link to force Chrome to download the file
   virtualLink.click();
 });
