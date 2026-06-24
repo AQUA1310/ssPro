@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "SnapShot Pro (React Edition)",
+  "version": "1.0.0",
+  "description": "Advanced screenshot engine built with React and Vite.",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "action": {
+    "default_popup": "index.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}
