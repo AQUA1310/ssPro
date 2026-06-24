@@ -2,45 +2,89 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>SnapShot Pro</title>
+  <title>SnapShot Pro Workspace</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      width: 500px;
-      margin: 10px;
-      text-align: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      width: 540px;
+      margin: 0;
+      padding: 15px;
+      background-color: #f4f6f9;
+      color: #333;
+    }
+    h2 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      font-size: 1.2rem;
+      color: #222;
     }
     #controls {
-      margin-bottom: 10px;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      background: #ffffff;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
     button {
       padding: 8px 12px;
-      margin: 2px;
       cursor: pointer;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 4px;
+      background-color: #f1f3f5;
+      color: #495057;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: all 0.2s ease;
     }
-    button:hover { background-color: #0056b3; }
+    button:hover { 
+      background-color: #e9ecef; 
+    }
+    button.active {
+      background-color: #228be6;
+      color: white;
+      border-color: #228be6;
+    }
+    #capture-btn { 
+      background-color: #2b8a3e; 
+      color: white;
+      border-color: #2b8a3e;
+    }
+    #capture-btn:hover { background-color: #237032; }
+    #clear-btn { background-color: #fa5252; color: white; border-color: #fa5252;}
+    #clear-btn:hover { background-color: #e03131; }
+    
     canvas {
-      border: 2px solid #333;
-      margin-top: 10px;
+      border: 1px solid #ced4da;
+      border-radius: 8px;
+      display: block;
+      margin: 0 auto;
       max-width: 100%;
       cursor: crosshair;
+      background-color: #ffffff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
   </style>
 </head>
 <body>
 
-  <h2>SnapShot Pro</h2>
+  <h2>📸 SnapShot Pro — Workspace</h2>
   
   <div id="controls">
     <button id="capture-btn">📸 Capture Tab</button>
+    <div style="width: 100%; height: 1px; background: #e9ecef; margin: 4px 0;"></div>
+    <button id="tool-pen" class="active">✏️ Pen</button>
+    <button id="tool-rect">⬜ Rectangle</button>
+    <button id="tool-arrow">➡️ Arrow</button>
+    <button id="tool-highlight">🖍️ Highlight</button>
+    <button id="tool-blur">💧 Blur</button>
+    <div style="width: 100%; height: 1px; background: #e9ecef; margin: 4px 0;"></div>
     <button id="clear-btn">❌ Clear Canvas</button>
   </div>
 
-  <canvas id="screenshot-canvas" width="480" height="300"></canvas>
+  <canvas id="screenshot-canvas" width="500" height="350"></canvas>
 
   <script src="popup.js"></script>
 </body>
