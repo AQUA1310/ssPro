@@ -4,77 +4,57 @@ import { useScreenshot } from '../context/ScreenshotContext';
 export default function Toolbar({ onCapture, onClear }) {
   const { activeTool, setActiveTool } = useScreenshot();
 
-  const toolset = [
+  const tools = [
     { id: 'pen', label: '✏️ Pen' },
-    { id: 'rect', label: '⬜ Rectangle' },
-    { id: 'arrow', label: '➡️ Arrow' },
     { id: 'highlight', label: '🖍️ Highlight' },
-    { id: 'blur', label: '💧 Blur' }
+    { id: 'rect', label: '⏹️ Crop Box' },
+    { id: 'arrow', label: '➡️ Arrow' },
+    { id: 'blur', label: '🌫️ Blur' },
   ];
 
   return (
-    <div style={{
-      marginBottom: '15px',
-      display: 'flex',
-      justifyContent: 'center', // Fixed: Added quotes here
-      gap: '6px',
-      flexWrap: 'wrap',
-      background: '#ffffff',
-      padding: '10px',
-      borderRadius: '8px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
-    }}>
-      <button 
-        onClick={onCapture}
-        style={{ 
-          backgroundColor: '#2b8a3e', 
-          color: 'white', 
-          border: 'none', 
-          padding: '8px 12px', 
-          borderRadius: '6px', 
-          fontWeight: 'bold', 
-          cursor: 'pointer' 
-        }}
-      >
-        📸 Capture Tab
-      </button>
-
-      <div style={{ width: '100%', height: '1px', background: '#e9ecef', margin: '4px 0' }}></div>
-
-      {toolset.map((tool) => (
-        <button
-          key={tool.id}
-          onClick={() => setActiveTool(tool.id)}
-          style={{
-            padding: '8px 12px',
-            cursor: 'pointer',
-            borderRadius: '6px',
-            fontWeight: '500',
-            border: '1px solid #dee2e6',
-            backgroundColor: activeTool === tool.id ? '#228be6' : '#f1f3f5',
-            color: activeTool === tool.id ? 'white' : '#495057'
-          }}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', backgroundColor: '#fff', padding: '15px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', marginBottom: '15px' }}>
+      
+      {/* Action Buttons */}
+      <div style={{ display: 'flex', gap: '10px' }}>
+        <button 
+          onClick={onCapture} // 🌟 CRITICAL: Wired to parent handleCapture
+          style={{ flex: 1, padding: '10px', backgroundColor: '#228be6', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
         >
-          {tool.label}
+          📸 Capture Tab
         </button>
-      ))}
+        <button 
+          onClick={onClear} // 🌟 CRITICAL: Wired to parent handleClear
+          style={{ padding: '10px', backgroundColor: '#e0e0e0', color: '#333', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+        >
+          🗑️ Clear
+        </button>
+      </div>
 
-      <div style={{ width: '100%', height: '1px', background: '#e9ecef', margin: '4px 0' }}></div>
+      <hr style={{ border: 'none', borderTop: '1px solid #eee', margin: '5px 0' }} />
 
-      <button 
-        onClick={onClear}
-        style={{ 
-          backgroundColor: '#fa5252', 
-          color: 'white', 
-          border: 'none', 
-          padding: '8px 12px', 
-          borderRadius: '6px', 
-          fontWeight: 'bold', 
-          cursor: 'pointer' 
-        }}
-      >
-        ❌ Clear Canvas
-      </button>
+      {/* Editing Canvas Tools */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '5px' }}>
+        {tools.map((tool) => (
+          <button
+            key={tool.id}
+            onClick={() => setActiveTool(tool.id)}
+            style={{
+              padding: '8px 12px',
+              fontSize: '13px',
+              backgroundColor: activeTool === tool.id ? '#e3fafc' : '#f1f3f5',
+              color: activeTool === tool.id ? '#0c8599' : '#495057',
+              border: activeTool === tool.id ? '1px solid #1098ad' : '1px solid #dee2e6',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontWeight: activeTool === tool.id ? 'bold' : 'normal',
+              transition: 'all 0.2s'
+            }}
+          >
+            {tool.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

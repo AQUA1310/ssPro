@@ -1,30 +1,43 @@
 import React, { useState } from 'react';
 import Navigation from './components/Navigation';
 import Toolbar from './components/Toolbar';
+import DrawingCanvas from './components/DrawingCanvas'; // 🌟 Import the canvas
 import { useScreenshot } from './context/ScreenshotContext';
 
 function App() {
   const [activeView, setActiveView] = useState('workspace');
+  const [captureUrl, setCaptureUrl] = useState(null); // 🌟 Added missing capture state
+  const [clearTrigger, setClearTrigger] = useState(0); // 🌟 Added missing clear trigger
   const { saveToHistory } = useScreenshot();
 
   const handleCapture = () => {
     if (!window.chrome || !chrome.runtime) {
-      alert("Extension context missing. Build and test inside Chrome!");
+      alert("Extension context missing. Build and run inside Chrome!");
       return;
     }
 
-    chrome.runtime.sendMessage({ action: "CAPTURE_TAB" }, (response) => {
-      if (response && response.status === "success") {
-        // We will pass this data URL down to our drawing surface next!
-        console.log("Captured image payload successfully!");
-        saveToHistory(response.dataUrl);
-      }
-    });
+    // Give the service worker worker 100ms to mount cleanly
+    setTimeout(() => {
+      chrome.runtime.sendMessage({ action: "CAPTURE_TAB" }, (response) => {
+        if (chrome.runtime.lastError) {
+          alert(`Chrome Error: ${chrome.runtime.lastError.message}`);
+          return;
+        }
+
+        if (response && response.status === "success") {
+          setCaptureUrl(response.dataUrl);
+          saveToHistory(response.dataUrl);
+        } else {
+          alert("Background script failed to send back an image.");
+        }
+      });
+    }, 100);
   };
 
   const handleClear = () => {
-    // This will trigger a reset inside our upcoming canvas component
-    console.log("Clear workspace initiated.");
+    setCaptureUrl(null);
+    setClearTrigger(prev => prev + 1);
+    console.log("Workspace cleared.");
   };
 
   return (
@@ -36,8 +49,9 @@ function App() {
       {activeView === 'workspace' ? (
         <div>
           <Toolbar onCapture={handleCapture} onClear={handleClear} />
-          <div style={{ textAlign: 'center', color: '#666', padding: '20px', background: '#fff', border: '1px dashed #ccc', borderRadius: '8px' }}>
-            [Canvas Canvas Drawing Surface Component Coming Next]
+          <div style={{ marginTop: '15px' }}>
+            {/* 🌟 Mounted the Drawing Canvas with its tracking properties */}
+            <DrawingCanvas captureTrigger={captureUrl} clearTrigger={clearTrigger} />
           </div>
         </div>
       ) : (
