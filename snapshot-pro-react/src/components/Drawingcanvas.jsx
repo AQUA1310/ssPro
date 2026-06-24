@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useScreenshot } from '../context/ScreenshotContext';
 
 export default function DrawingCanvas({ captureTrigger, clearTrigger }) {
-  const { activeTool } = useScreenshot();
+  const { activeTool, saveToHistory } = useScreenshot();
   const canvasRef = useRef(null);
   
   const [isDrawing, setIsDrawing] = useState(false);
@@ -91,7 +91,10 @@ export default function DrawingCanvas({ captureTrigger, clearTrigger }) {
   };
 
 // --- 3. Mouse Up Handler (Instant Crop & Auto-Download without outlines) ---
+// --- 3. Mouse Up Handler (With Deep Troubleshooting) ---
   const handleMouseUp = (e) => {
+    // 🔍 Test 1: Is the component tracking that you are currently drawing?
+    console.log("MouseUp detected! isDrawing state is:", isDrawing);
     if (!isDrawing) return;
     setIsDrawing(false);
 
@@ -106,33 +109,32 @@ export default function DrawingCanvas({ captureTrigger, clearTrigger }) {
     const width = Math.abs(endX - startPos.x);
     const height = Math.abs(endY - startPos.y);
 
-    // Filter out accidental mini-clicks
+    // 🔍 Test 2: Print out the exact drawn box size dimensions
+    console.log(`Calculated dimensions -> Width: ${width}px, Height: ${height}px, activeTool: ${activeTool}`);
+
     if (width <= 5 || height <= 5) {
-      // If they just clicked without dragging, clear any leftover preview lines
+      console.warn("Box size too tiny! Exiting early to prevent accidental clicks.");
       if (canvasSnapshot) ctx.putImageData(canvasSnapshot, 0, 0);
       return;
     }
 
     if (activeTool === 'rect') {
-      // 🌟 FIX: Instantly restore the canvas to its clean snapshot state 
-      // This wipes the blue guide line away so it's not captured in the final image!
       ctx.putImageData(canvasSnapshot, 0, 0);
 
-      // Create our off-screen cropping canvas
       const cropCanvas = document.createElement('canvas');
       cropCanvas.width = width;
       cropCanvas.height = height;
       const cropCtx = cropCanvas.getContext('2d');
 
-      // Grab the perfectly clean pixels
       cropCtx.drawImage(
         canvas,
         x, y, width, height, 
         0, 0, width, height  
       );
 
-      // Trigger automatic background link download
       const imageURI = cropCanvas.toDataURL("image/png");
+
+      // Trigger automatic background link download instantly
       const virtualLink = document.createElement('a');
       virtualLink.download = `crop-${Date.now()}.png`;
       virtualLink.href = imageURI;
@@ -140,22 +142,18 @@ export default function DrawingCanvas({ captureTrigger, clearTrigger }) {
     }
 
     if (activeTool === 'blur') {
-      // 🌟 FIX: Instantly restore canvas to wipe the purple dashed line before blurring
+      console.log("Entering 'blur' branch...");
       ctx.putImageData(canvasSnapshot, 0, 0);
-
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = width;
       tempCanvas.height = height;
       const tempCtx = tempCanvas.getContext('2d');
-      
-      // Grab clean pixels into memory, blur them, and paint them back down smoothly
       tempCtx.drawImage(canvas, x, y, width, height, 0, 0, width, height);
 
       ctx.filter = 'blur(6px)';
       ctx.drawImage(tempCanvas, x, y);
       ctx.filter = 'none';
 
-      // Save this beautifully blurred state into our memory baseline snapshot
       const updatedSnapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
       setCanvasSnapshot(updatedSnapshot);
     }
